@@ -82,15 +82,39 @@ static int cmd_info(char *args) {
 static int cmd_x(char *args);
 static int cmd_x(char *args) {
   int n, i;
-  unsigned int addr;
+  char *n_str;
+  char *expr_str;
+  bool success = true;
+  uint32_t addr;
 
-  if (args == NULL || sscanf(args, "%d %x", &n, &addr) != 2 || n <= 0) {
+  if (args == NULL) {
     printf("Usage: x N EXPR\n");
-    printf("Current version only accepts hex address, e.g. x 2 0x100000\n");
     return 0;
   }
 
-  Log("cmd_x: n=%d, start=0x%08x", n, addr);
+  n_str = strtok(args, " ");
+  if (n_str == NULL || sscanf(n_str, "%d", &n) != 1 || n <= 0) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  expr_str = n_str + strlen(n_str) + 1;
+  while (*expr_str == ' ') {
+    expr_str ++;
+  }
+  if (*expr_str == '\0') {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  Log("cmd_x: n=%d, expr=%s", n, expr_str);
+  addr = expr(expr_str, &success);
+  if (!success) {
+    printf("Bad expression.\n");
+    return 0;
+  }
+
+  Log("cmd_x: start=0x%08x", addr);
   for (i = 0; i < n; i++) {
     uint32_t data = vaddr_read(addr + i * 4, 4);
     Log("cmd_x: addr=0x%08x, data=0x%08x", addr + i * 4, data);
