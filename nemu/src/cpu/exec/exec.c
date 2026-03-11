@@ -30,15 +30,6 @@ static inline void idex(vaddr_t *eip, opcode_entry *e) {
   e->execute(eip);
 }
 
-static make_EHelper(2byte_esc);
-
-static inline void exec_opcode(vaddr_t *eip, uint32_t opcode) {
-  opcode_entry *e = &opcode_table[opcode];
-  decoding.opcode = opcode;
-  set_width(e->width);
-  idex(eip, e);
-}
-
 #define make_group(name, item0, item1, item2, item3, item4, item5, item6, item7) \
   static opcode_entry concat(opcode_table_, name) [8] = { \
     /* 0x00 */	item0, item1, item2, item3, \
@@ -84,7 +75,7 @@ static opcode_entry opcode_table [512] = {
   /* 0x00 */	IDEXW(G2E, add, 1), IDEX(G2E, add), IDEXW(E2G, add, 1), IDEX(E2G, add),
   /* 0x04 */	IDEXW(I2a, add, 1), IDEX(I2a, add), EMPTY, EMPTY,
   /* 0x08 */	IDEXW(G2E, or, 1), IDEX(G2E, or), IDEXW(E2G, or, 1), IDEX(E2G, or),
-  /* 0x0c */	IDEXW(I2a, or, 1), IDEX(I2a, or), EMPTY, EX(2byte_esc),
+  /* 0x0c */	IDEXW(I2a, or, 1), IDEX(I2a, or), EMPTY, EMPTY,
   /* 0x10 */	IDEXW(G2E, adc, 1), IDEX(G2E, adc), IDEXW(E2G, adc, 1), IDEX(E2G, adc),
   /* 0x14 */	IDEXW(I2a, adc, 1), IDEX(I2a, adc), EMPTY, EMPTY,
   /* 0x18 */	IDEXW(G2E, sbb, 1), IDEX(G2E, sbb), IDEXW(E2G, sbb, 1), IDEX(E2G, sbb),
@@ -214,17 +205,18 @@ static opcode_entry opcode_table [512] = {
   /* 0xfc */	EMPTY, EMPTY, EMPTY, EMPTY
 };
 
-static make_EHelper(2byte_esc) {
-  exec_opcode(eip, instr_fetch(eip, 1) | 0x100);
-}
-
 make_EHelper(real) {
   uint32_t opcode = instr_fetch(eip, 1);
+  opcode_entry *e;
+
   if (opcode == 0x0f) {
-    exec_opcode(eip, instr_fetch(eip, 1) | 0x100);
-    return;
+    opcode = instr_fetch(eip, 1) | 0x100;
   }
-  exec_opcode(eip, opcode);
+
+  e = &opcode_table[opcode];
+  decoding.opcode = opcode;
+  set_width(e->width);
+  idex(eip, e);
 }
 
 static inline void update_eip(void) {
