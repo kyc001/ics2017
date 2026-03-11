@@ -101,10 +101,25 @@ void init_vga() {
     SdlVideoProbeResult probe;
     int status = probe_host_video_backend(&probe, 2000);
     if (status == SDL_VIDEO_PROBE_TIMEOUT) {
-      Assert(0, "SDL host video init timed out. DISPLAY=%s. This shell likely has no usable GUI session for NEMU.",
+      if (getenv("NEMU_STRICT_HOST_DISPLAY")) {
+        Assert(0, "SDL host video init timed out. DISPLAY=%s. This shell likely has no usable GUI session for NEMU.",
+            getenv("DISPLAY") ? getenv("DISPLAY") : "(unset)");
+      }
+      fprintf(stderr, "warning: SDL host video init timed out on DISPLAY=%s, falling back to SDL_VIDEODRIVER=dummy.\n",
           getenv("DISPLAY") ? getenv("DISPLAY") : "(unset)");
+      fprintf(stderr, "warning: enabling terminal keyboard fallback for headless interactive programs.\n");
+      setenv("SDL_VIDEODRIVER", "dummy", 1);
+      setenv("NEMU_TERMINAL_KEYS_ACTIVE", "1", 1);
     }
-    Assert(status == SDL_VIDEO_PROBE_OK, "SDL host video init failed: %s", probe.err);
+    else if (status != SDL_VIDEO_PROBE_OK) {
+      if (getenv("NEMU_STRICT_HOST_DISPLAY")) {
+        Assert(0, "SDL host video init failed: %s", probe.err);
+      }
+      fprintf(stderr, "warning: SDL host video init failed (%s), falling back to SDL_VIDEODRIVER=dummy.\n", probe.err);
+      fprintf(stderr, "warning: enabling terminal keyboard fallback for headless interactive programs.\n");
+      setenv("SDL_VIDEODRIVER", "dummy", 1);
+      setenv("NEMU_TERMINAL_KEYS_ACTIVE", "1", 1);
+    }
   }
 
   int ret = SDL_Init(SDL_INIT_VIDEO);
