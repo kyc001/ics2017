@@ -1,8 +1,18 @@
 #!/bin/bash
 
-nemu=build/nemu
+set -e
 
-if make &> /dev/null; then
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+nemu="$script_dir/build/nemu"
+ori_log="$script_dir/build/nemu-log.txt"
+
+# In container/devbox setups DISPLAY may exist but still be unusable.
+# Default to SDL's headless backend unless the user explicitly opts out.
+if [ -z "${SDL_VIDEODRIVER:-}" ] && [ "${NEMU_USE_HOST_DISPLAY:-0}" != "1" ]; then
+  export SDL_VIDEODRIVER=dummy
+fi
+
+if make -C "$script_dir" &> /dev/null; then
   echo "NEMU compile OK"
 else
   echo "testcases compile error... exit..."
@@ -18,7 +28,6 @@ else
 fi
 
 files=`ls $AM_HOME/tests/cputest/build/*-x86-nemu.bin`
-ori_log="build/nemu-log.txt"
 
 for file in $files; do
   base=`basename $file | sed -e 's/-x86-nemu.bin//'`
