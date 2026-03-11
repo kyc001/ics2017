@@ -79,6 +79,26 @@ static int cmd_info(char *args) {
   return 0;
 }
 
+static int cmd_x(char *args);
+static int cmd_x(char *args) {
+  int n, i;
+  unsigned int addr;
+
+  if (args == NULL || sscanf(args, "%d %x", &n, &addr) != 2 || n <= 0) {
+    printf("Usage: x N EXPR\n");
+    printf("Current version only accepts hex address, e.g. x 2 0x100000\n");
+    return 0;
+  }
+
+  Log("cmd_x: n=%d, start=0x%08x", n, addr);
+  for (i = 0; i < n; i++) {
+    uint32_t data = vaddr_read(addr + i * 4, 4);
+    Log("cmd_x: addr=0x%08x, data=0x%08x", addr + i * 4, data);
+    printf("0x%08x: 0x%08x\n", addr + i * 4, data);
+  }
+  return 0;
+}
+
 static struct {
   char *name;
   char *description;
@@ -89,7 +109,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   { "si", "Execute N instructions and stop", cmd_si },
   { "info", "Print program status", cmd_info },
-
+  { "x", "Examine memory", cmd_x },
   /* TODO: Add more commands */
 
 };
