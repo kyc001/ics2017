@@ -9,7 +9,7 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ,
-  TK_NUM, TK_HEX
+  TK_NUM, TK_HEX, TK_REG
 
   /* TODO: Add more token types */
 };
@@ -24,6 +24,7 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},            // spaces
+  {"\\$[a-zA-Z]+", TK_REG},
   {"0[xX][0-9a-fA-F]+", TK_HEX},
   {"[0-9]+", TK_NUM},
   {"\\+", '+'},                 // plus
@@ -68,6 +69,7 @@ static bool check_parentheses(int p, int q);
 static int precedence(int type);
 static int dominant_operator(int p, int q);
 static uint32_t eval(int p, int q, bool *success);
+static uint32_t eval_reg(const char *s, bool *success);
 
 static bool make_token(char *e) {
   int position = 0;
@@ -92,6 +94,7 @@ static bool make_token(char *e) {
             break;
           case TK_NUM:
           case TK_HEX:
+          case TK_REG:
             Assert(nr_token < 32, "too many tokens");
             Assert(substr_len < (int)sizeof(tokens[nr_token].str), "token too long");
             tokens[nr_token].type = rules[i].token_type;
@@ -121,6 +124,28 @@ static bool make_token(char *e) {
   }
 
   return true;
+}
+
+static uint32_t eval_reg(const char *s, bool *success) {
+  int i;
+
+  if (strcmp(s, "$eip") == 0) {
+    Log("eval_reg: %s -> 0x%08x", s, cpu.eip);
+    return cpu.eip;
+  }
+
+  for (i = 0; i < 8; i ++) {
+    char buf[8];
+    sprintf(buf, "$%s", regsl[i]);
+    if (strcmp(s, buf) == 0) {
+      Log("eval_reg: %s -> 0x%08x", s, reg_l(i));
+      return reg_l(i);
+    }
+  }
+
+  Log("eval_reg: unknown register %s", s);
+  *success = false;
+  return 0;
 }
 
 uint32_t expr(char *e, bool *success) {
@@ -219,14 +244,23 @@ static uint32_t eval(int p, int q, bool *success) {
   }
 
   if (p == q) {
-    if (tokens[p].type != TK_NUM && tokens[p].type != TK_HEX) {
-      *success = false;
-      return 0;
+    if (tokens[p].type == TK_NUM || tokens[p].type == TK_HEX) {
+      result = strtoul(tokens[p].str, NULL, 0);
+      Log("eval leave: p=%d q=%d result=0x%08x", p, q, result);
+      return result;
     }
 
-    result = strtoul(tokens[p].str, NULL, 0);
-    Log("eval leave: p=%d q=%d result=0x%08x", p, q, result);
-    return result;
+    if (tokens[p].type == TK_REG) {
+      result = eval_reg(tokens[p].str, success);
+      if (*success) {
+        Log("eval leave: p=%d q=%d result=0x%08x", p, q, result);
+      }
+      return result;
+    }
+
+    *success = false;
+    Log("eval leave: p=%d q=%d bad single token type=%d", p, q, tokens[p].type);
+    return 0;
   }
 
   if (check_parentheses(p, q)) {
