@@ -16,7 +16,7 @@ make_EHelper(rep) {
     instr_fetch(eip, 1);
     instr_fetch(eip, 1);
     instr_fetch(eip, 1);
-    Log("pa2-debug: treat endbr32 as nop at 0x%08x", cpu.eip);
+    // Log("pa2-debug: treat endbr32 as nop at 0x%08x", cpu.eip);
     print_asm("endbr32");
     return;
   }

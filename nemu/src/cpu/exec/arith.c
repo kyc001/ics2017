@@ -15,7 +15,7 @@ make_EHelper(add) {
   rtl_msb(&t0, &t0, id_dest->width);
   rtl_set_OF(&t0);
 
-  Log("pa2-debug: add result=0x%08x", t2);
+  // Log("pa2-debug: add result=0x%08x", t2);
 
   print_asm_template2(add);
 }
@@ -34,7 +34,7 @@ make_EHelper(sub) {
   rtl_msb(&t0, &t0, id_dest->width);
   rtl_set_OF(&t0);
 
-  Log("pa2-debug: sub result=0x%08x", t2);
+  // Log("pa2-debug: sub result=0x%08x", t2);
 
   print_asm_template2(sub);
 }
@@ -52,7 +52,7 @@ make_EHelper(cmp) {
   rtl_msb(&t0, &t0, id_dest->width);
   rtl_set_OF(&t0);
 
-  Log("pa2-debug: cmp diff=0x%08x", t2);
+  // Log("pa2-debug: cmp diff=0x%08x", t2);
 
   print_asm_template2(cmp);
 }
@@ -72,7 +72,7 @@ make_EHelper(inc) {
   rtl_set_OF(&t0);
   rtl_set_CF(&t3);
 
-  Log("pa2-debug: inc result=0x%08x", t2);
+  // Log("pa2-debug: inc result=0x%08x", t2);
 
   print_asm_template1(inc);
 }
@@ -91,7 +91,7 @@ make_EHelper(dec) {
   rtl_set_OF(&t0);
   rtl_set_CF(&t3);
 
-  Log("pa2-debug: dec result=0x%08x", t2);
+  // Log("pa2-debug: dec result=0x%08x", t2);
 
   print_asm_template1(dec);
 }
@@ -112,7 +112,7 @@ make_EHelper(neg) {
   rtl_msb(&t0, &t0, id_dest->width);
   rtl_set_OF(&t0);
 
-  Log("pa2-debug: neg result=0x%08x", t2);
+  // Log("pa2-debug: neg result=0x%08x", t2);
 
   print_asm_template1(neg);
 }

@@ -19,7 +19,7 @@ make_EHelper(and) {
   rtl_set_CF(&t0);
   rtl_set_OF(&t0);
 
-  Log("pa2-debug: and result=0x%08x", t2);
+  // Log("pa2-debug: and result=0x%08x", t2);
 
   print_asm_template2(and);
 }
@@ -33,7 +33,7 @@ make_EHelper(xor) {
   rtl_set_CF(&t0);
   rtl_set_OF(&t0);
 
-  Log("pa2-debug: xor result=0x%08x", t2);
+  // Log("pa2-debug: xor result=0x%08x", t2);
 
   print_asm_template2(xor);
 }
