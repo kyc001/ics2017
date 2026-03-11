@@ -60,7 +60,6 @@ typedef union {
   uint8_t val;
 } SIB;
 
-void load_addr(vaddr_t *, ModR_M *, Operand *);
 void read_ModR_M(vaddr_t *, Operand *, bool, Operand *, bool);
 
 static inline rtlreg_t decode_reg_read(int reg, int width) {

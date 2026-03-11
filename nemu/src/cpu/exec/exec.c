@@ -7,6 +7,8 @@ typedef struct {
   int width;
 } opcode_entry;
 
+static opcode_entry opcode_table[512];
+
 #define IDEXW(id, ex, w)   {concat(decode_, id), concat(exec_, ex), w}
 #define IDEX(id, ex)       IDEXW(id, ex, 0)
 #define EXW(ex, w)         {NULL, concat(exec_, ex), w}
@@ -29,6 +31,13 @@ static inline void idex(vaddr_t *eip, opcode_entry *e) {
 }
 
 static make_EHelper(2byte_esc);
+
+static inline void exec_opcode(vaddr_t *eip, uint32_t opcode) {
+  opcode_entry *e = &opcode_table[opcode];
+  decoding.opcode = opcode;
+  set_width(e->width);
+  idex(eip, e);
+}
 
 #define make_group(name, item0, item1, item2, item3, item4, item5, item6, item7) \
   static opcode_entry concat(opcode_table_, name) [8] = { \
@@ -71,7 +80,7 @@ make_group(gp7,
 
 /* TODO: Add more instructions!!! */
 
-opcode_entry opcode_table [512] = {
+static opcode_entry opcode_table [512] = {
   /* 0x00 */	IDEXW(G2E, add, 1), IDEX(G2E, add), IDEXW(E2G, add, 1), IDEX(E2G, add),
   /* 0x04 */	IDEXW(I2a, add, 1), IDEX(I2a, add), EMPTY, EMPTY,
   /* 0x08 */	IDEXW(G2E, or, 1), IDEX(G2E, or), IDEXW(E2G, or, 1), IDEX(E2G, or),
@@ -206,17 +215,16 @@ opcode_entry opcode_table [512] = {
 };
 
 static make_EHelper(2byte_esc) {
-  uint32_t opcode = instr_fetch(eip, 1) | 0x100;
-  decoding.opcode = opcode;
-  set_width(opcode_table[opcode].width);
-  idex(eip, &opcode_table[opcode]);
+  exec_opcode(eip, instr_fetch(eip, 1) | 0x100);
 }
 
 make_EHelper(real) {
   uint32_t opcode = instr_fetch(eip, 1);
-  decoding.opcode = opcode;
-  set_width(opcode_table[opcode].width);
-  idex(eip, &opcode_table[opcode]);
+  if (opcode == 0x0f) {
+    exec_opcode(eip, instr_fetch(eip, 1) | 0x100);
+    return;
+  }
+  exec_opcode(eip, opcode);
 }
 
 static inline void update_eip(void) {

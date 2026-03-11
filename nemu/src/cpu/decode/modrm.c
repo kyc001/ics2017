@@ -1,7 +1,7 @@
 #include "cpu/exec.h"
 #include "cpu/rtl.h"
 
-void load_addr(vaddr_t *eip, ModR_M *m, Operand *rm) {
+static inline void load_addr(vaddr_t *eip, ModR_M *m, Operand *rm) {
   assert(m->mod != 3);
 
   int32_t disp = 0;

@@ -288,9 +288,19 @@ make_DHelper(a2O) {
 }
 
 make_DHelper(J) {
-  decode_op_SI(eip, id_dest, false);
+  id_dest->type = OP_TYPE_IMM;
+  switch (id_dest->width) {
+    case 1: id_dest->simm = (int8_t)instr_fetch(eip, 1); break;
+    case 2: id_dest->simm = (int16_t)instr_fetch(eip, 2); break;
+    case 4: id_dest->simm = (int32_t)instr_fetch(eip, 4); break;
+    default: assert(0);
+  }
+  id_dest->val = id_dest->simm;
   // the target address can be computed in the decode stage
   decoding.jmp_eip = id_dest->simm + *eip;
+#ifdef DEBUG
+  snprintf(id_dest->str, OP_STR_SIZE, "$0x%x", id_dest->simm);
+#endif
 }
 
 make_DHelper(push_SI) {
