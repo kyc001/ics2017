@@ -40,9 +40,31 @@ static bool host_display_requested() {
   return use_host != NULL && strcmp(use_host, "1") == 0;
 }
 
-static bool should_use_dummy_video_backend() {
+static bool explicit_video_backend_selected() {
   const char *video = getenv("SDL_VIDEODRIVER");
-  return video == NULL && !host_display_requested();
+  return video != NULL && video[0] != '\0';
+}
+
+static bool has_display_env() {
+  const char *display = getenv("DISPLAY");
+  return display != NULL && display[0] != '\0';
+}
+
+static bool should_try_host_display() {
+  if (explicit_video_backend_selected()) {
+    return false;
+  }
+  return host_display_requested() || has_display_env();
+}
+
+static void enable_dummy_backend(bool enable_terminal_keys, const char *reason) {
+  if (reason != NULL) {
+    fprintf(stderr, "%s\n", reason);
+  }
+  setenv("SDL_VIDEODRIVER", "dummy", 1);
+  if (enable_terminal_keys) {
+    setenv("NEMU_TERMINAL_KEYS_ACTIVE", "1", 1);
+  }
 }
 
 static int probe_host_video_backend(SdlVideoProbeResult *result, int timeout_ms) {
@@ -94,10 +116,7 @@ void update_screen() {
 }
 
 void init_vga() {
-  if (should_use_dummy_video_backend()) {
-    setenv("SDL_VIDEODRIVER", "dummy", 0);
-  }
-  else if (host_display_requested() && getenv("SDL_VIDEODRIVER") == NULL) {
+  if (should_try_host_display()) {
     SdlVideoProbeResult probe;
     int status = probe_host_video_backend(&probe, 2000);
     if (status == SDL_VIDEO_PROBE_TIMEOUT) {
@@ -105,21 +124,26 @@ void init_vga() {
         Assert(0, "SDL host video init timed out. DISPLAY=%s. This shell likely has no usable GUI session for NEMU.",
             getenv("DISPLAY") ? getenv("DISPLAY") : "(unset)");
       }
-      fprintf(stderr, "warning: SDL host video init timed out on DISPLAY=%s, falling back to SDL_VIDEODRIVER=dummy.\n",
+      char msg[256];
+      snprintf(msg, sizeof(msg),
+          "warning: SDL host video init timed out on DISPLAY=%s, falling back to SDL_VIDEODRIVER=dummy.",
           getenv("DISPLAY") ? getenv("DISPLAY") : "(unset)");
+      enable_dummy_backend(true, msg);
       fprintf(stderr, "warning: enabling terminal keyboard fallback for headless interactive programs.\n");
-      setenv("SDL_VIDEODRIVER", "dummy", 1);
-      setenv("NEMU_TERMINAL_KEYS_ACTIVE", "1", 1);
     }
     else if (status != SDL_VIDEO_PROBE_OK) {
       if (getenv("NEMU_STRICT_HOST_DISPLAY")) {
         Assert(0, "SDL host video init failed: %s", probe.err);
       }
-      fprintf(stderr, "warning: SDL host video init failed (%s), falling back to SDL_VIDEODRIVER=dummy.\n", probe.err);
+      char msg[256];
+      snprintf(msg, sizeof(msg),
+          "warning: SDL host video init failed (%s), falling back to SDL_VIDEODRIVER=dummy.",
+          probe.err);
+      enable_dummy_backend(true, msg);
       fprintf(stderr, "warning: enabling terminal keyboard fallback for headless interactive programs.\n");
-      setenv("SDL_VIDEODRIVER", "dummy", 1);
-      setenv("NEMU_TERMINAL_KEYS_ACTIVE", "1", 1);
     }
+  } else if (!explicit_video_backend_selected()) {
+    enable_dummy_backend(true, "note: no DISPLAY detected, using SDL_VIDEODRIVER=dummy.");
   }
 
   int ret = SDL_Init(SDL_INIT_VIDEO);
