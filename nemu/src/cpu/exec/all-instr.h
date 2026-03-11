@@ -5,6 +5,7 @@ make_EHelper(lea);
 make_EHelper(add);
 make_EHelper(cmp);
 make_EHelper(and);
+make_EHelper(setcc);
 make_EHelper(push);
 make_EHelper(pop);
 make_EHelper(nop);
