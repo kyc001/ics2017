@@ -63,9 +63,27 @@ typedef union {
 void load_addr(vaddr_t *, ModR_M *, Operand *);
 void read_ModR_M(vaddr_t *, Operand *, bool, Operand *, bool);
 
+static inline rtlreg_t decode_reg_read(int reg, int width) {
+  switch (width) {
+    case 4: return cpu.gpr[reg]._32;
+    case 2: return cpu.gpr[reg]._16;
+    case 1: return cpu.gpr[reg & 0x3]._8[reg >> 2];
+    default: assert(0); return 0;
+  }
+}
+
+static inline void decode_reg_write(int reg, int width, rtlreg_t val) {
+  switch (width) {
+    case 4: cpu.gpr[reg]._32 = val; return;
+    case 2: cpu.gpr[reg]._16 = val; return;
+    case 1: cpu.gpr[reg & 0x3]._8[reg >> 2] = val; return;
+    default: assert(0); return;
+  }
+}
+
 static inline void operand_write(Operand *op, rtlreg_t *src) {
-  if (op->type == OP_TYPE_REG) { rtl_sr(op->reg, op->width, src); }
-  else if (op->type == OP_TYPE_MEM) { rtl_sm(&op->addr, op->width, src); }
+  if (op->type == OP_TYPE_REG) { decode_reg_write(op->reg, op->width, *src); }
+  else if (op->type == OP_TYPE_MEM) { vaddr_write(op->addr, op->width, *src); }
   else { assert(0); }
 }
 

@@ -63,9 +63,7 @@ typedef struct {
 extern CPU_state cpu;
 
 static inline int check_reg_index(int index) {
-#ifdef DEBUG
   assert(index >= 0 && index < 8);
-#endif
   return index;
 }
 

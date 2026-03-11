@@ -60,7 +60,7 @@ static inline make_DopHelper(a) {
   op->type = OP_TYPE_REG;
   op->reg = R_EAX;
   if (load_val) {
-    rtl_lr(&op->val, R_EAX, op->width);
+    op->val = decode_reg_read(R_EAX, op->width);
   }
 
 #ifdef DEBUG
@@ -76,7 +76,7 @@ static inline make_DopHelper(r) {
   op->type = OP_TYPE_REG;
   op->reg = decoding.opcode & 0x7;
   if (load_val) {
-    rtl_lr(&op->val, op->reg, op->width);
+    op->val = decode_reg_read(op->reg, op->width);
   }
 
 #ifdef DEBUG
@@ -325,7 +325,7 @@ make_DHelper(out_a2dx) {
 
   id_dest->type = OP_TYPE_REG;
   id_dest->reg = R_DX;
-  rtl_lr_w(&id_dest->val, R_DX);
+  id_dest->val = cpu.gpr[R_DX]._16;
 #ifdef DEBUG
   sprintf(id_dest->str, "(%%dx)");
 #endif

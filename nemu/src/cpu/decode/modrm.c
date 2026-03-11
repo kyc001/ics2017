@@ -84,7 +84,7 @@ void read_ModR_M(vaddr_t *eip, Operand *rm, bool load_rm_val, Operand *reg, bool
     reg->type = OP_TYPE_REG;
     reg->reg = m.reg;
     if (load_reg_val) {
-      rtl_lr(&reg->val, reg->reg, reg->width);
+      reg->val = decode_reg_read(reg->reg, reg->width);
     }
 
 #ifdef DEBUG
@@ -96,7 +96,7 @@ void read_ModR_M(vaddr_t *eip, Operand *rm, bool load_rm_val, Operand *reg, bool
     rm->type = OP_TYPE_REG;
     rm->reg = m.R_M;
     if (load_rm_val) {
-      rtl_lr(&rm->val, m.R_M, rm->width);
+      rm->val = decode_reg_read(m.R_M, rm->width);
     }
 
 #ifdef DEBUG
