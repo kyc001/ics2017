@@ -8,6 +8,7 @@
  * You can modify this value as you want.
  */
 #define MAX_INSTR_TO_PRINT 10
+#define IOE_UPDATE_INTERVAL 64
 
 int nemu_state = NEMU_STOP;
 
@@ -22,6 +23,11 @@ void cpu_exec(uint64_t n) {
   nemu_state = NEMU_RUNNING;
 
   bool print_flag = n < MAX_INSTR_TO_PRINT;
+#ifdef HAS_IOE
+  extern void device_update();
+  uint32_t ioe_interval = print_flag ? 1 : IOE_UPDATE_INTERVAL;
+  uint32_t ioe_budget = ioe_interval;
+#endif
 
   for (; n > 0; n --) {
     /* Execute one instruction, including instruction fetch,
@@ -36,8 +42,12 @@ void cpu_exec(uint64_t n) {
 #endif
 
 #ifdef HAS_IOE
-    extern void device_update();
-    device_update();
+    // Device polling is much more expensive than a single guest instruction.
+    // Keep single-step behavior unchanged, but batch updates for long runs.
+    if (--ioe_budget == 0 || nemu_state != NEMU_RUNNING || n == 1) {
+      device_update();
+      ioe_budget = ioe_interval;
+    }
 #endif
 
     if (nemu_state != NEMU_RUNNING) { return; }
