@@ -20,7 +20,9 @@ static void pio_callback(ioaddr_t addr, int len, bool is_write) {
   int i;
   for (i = 0; i < nr_map; i ++) {
     if (addr >= maps[i].low && addr + len - 1 <= maps[i].high) {
-      maps[i].callback(addr, len, is_write);
+      if (maps[i].callback != NULL) {
+        maps[i].callback(addr, len, is_write);
+      }
       return;
     }
   }
@@ -38,19 +40,48 @@ void* add_pio_map(ioaddr_t addr, int len, pio_callback_t callback) {
 }
 
 
-/* CPU interface */
-uint32_t pio_read(ioaddr_t addr, int len) {
-  assert(len == 1 || len == 2 || len == 4);
+static inline uint32_t pio_read_common(ioaddr_t addr, int len) {
   assert(addr + len - 1 < PORT_IO_SPACE_MAX);
   pio_callback(addr, len, false);		// prepare data to read
-  uint32_t data = *(uint32_t *)(pio_space + addr) & (~0u >> ((4 - len) << 3));
-  return data;
+  switch (len) {
+    case 4: return *(uint32_t *)(pio_space + addr);
+    case 2: return *(uint16_t *)(pio_space + addr);
+    case 1: return *(uint8_t *)(pio_space + addr);
+    default: assert(0);
+  }
 }
 
-void pio_write(ioaddr_t addr, int len, uint32_t data) {
-  assert(len == 1 || len == 2 || len == 4);
+static inline void pio_write_common(ioaddr_t addr, uint32_t data, int len) {
   assert(addr + len - 1 < PORT_IO_SPACE_MAX);
-  memcpy(pio_space + addr, &data, len);
+  switch (len) {
+    case 4: *(uint32_t *)(pio_space + addr) = data; break;
+    case 2: *(uint16_t *)(pio_space + addr) = data; break;
+    case 1: *(uint8_t *)(pio_space + addr) = data; break;
+    default: assert(0);
+  }
   pio_callback(addr, len, true);
 }
 
+uint32_t pio_read_l(ioaddr_t addr) {
+  return pio_read_common(addr, 4);
+}
+
+uint32_t pio_read_w(ioaddr_t addr) {
+  return pio_read_common(addr, 2);
+}
+
+uint32_t pio_read_b(ioaddr_t addr) {
+  return pio_read_common(addr, 1);
+}
+
+void pio_write_l(ioaddr_t addr, uint32_t data) {
+  pio_write_common(addr, data, 4);
+}
+
+void pio_write_w(ioaddr_t addr, uint32_t data) {
+  pio_write_common(addr, data, 2);
+}
+
+void pio_write_b(ioaddr_t addr, uint32_t data) {
+  pio_write_common(addr, data, 1);
+}

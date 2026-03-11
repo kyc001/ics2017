@@ -26,6 +26,7 @@ typedef struct {
   uint32_t opcode;
   vaddr_t seq_eip;  // sequential eip
   bool is_operand_size_16;
+  bool rep_prefix;
   uint8_t ext_opcode;
   bool is_jmp;
   vaddr_t jmp_eip;
@@ -84,6 +85,7 @@ make_DHelper(I_G2E);
 make_DHelper(I);
 make_DHelper(r);
 make_DHelper(E);
+make_DHelper(setcc_E);
 make_DHelper(gp7_E);
 make_DHelper(test_I);
 make_DHelper(SI);
@@ -94,11 +96,15 @@ make_DHelper(mov_I2r);
 make_DHelper(mov_I2E);
 make_DHelper(mov_G2E);
 make_DHelper(mov_E2G);
+make_DHelper(mov_r2CR);
+make_DHelper(mov_CR2r);
 make_DHelper(lea_M2G);
 
 make_DHelper(gp2_1_E);
 make_DHelper(gp2_cl2E);
 make_DHelper(gp2_Ib2E);
+make_DHelper(Ib_G2E);
+make_DHelper(cl_G2E);
 
 make_DHelper(O2a);
 make_DHelper(a2O);

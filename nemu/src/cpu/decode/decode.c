@@ -133,6 +133,14 @@ make_DHelper(mov_E2G) {
   decode_op_rm(eip, id_src, true, id_dest, false);
 }
 
+make_DHelper(mov_r2CR) {
+  decode_op_rm(eip, id_src, true, id_dest, false);
+}
+
+make_DHelper(mov_CR2r) {
+  decode_op_rm(eip, id_dest, false, id_src, false);
+}
+
 make_DHelper(lea_M2G) {
   decode_op_rm(eip, id_src, false, id_dest, false);
 }
@@ -190,6 +198,10 @@ make_DHelper(r) {
 
 make_DHelper(E) {
   decode_op_rm(eip, id_dest, true, NULL, false);
+}
+
+make_DHelper(setcc_E) {
+  decode_op_rm(eip, id_dest, false, NULL, false);
 }
 
 make_DHelper(gp7_E) {
@@ -253,6 +265,16 @@ make_DHelper(Ib_G2E) {
   decode_op_rm(eip, id_dest, true, id_src2, true);
   id_src->width = 1;
   decode_op_I(eip, id_src, true);
+}
+
+make_DHelper(cl_G2E) {
+  decode_op_rm(eip, id_dest, true, id_src2, true);
+  id_src->type = OP_TYPE_REG;
+  id_src->reg = R_CL;
+  rtl_lr_b(&id_src->val, R_CL);
+#ifdef DEBUG
+  sprintf(id_src->str, "%%cl");
+#endif
 }
 
 make_DHelper(O2a) {

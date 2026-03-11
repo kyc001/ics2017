@@ -21,5 +21,7 @@ make_EHelper(rep) {
     return;
   }
 
-  exec_inv(eip);
+  decoding.rep_prefix = true;
+  exec_real(eip);
+  decoding.rep_prefix = false;
 }
