@@ -9,7 +9,8 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ,
-  TK_NUM, TK_HEX, TK_REG
+  TK_NUM, TK_HEX, TK_REG,
+  TK_DEREF, TK_NEG
 
   /* TODO: Add more token types */
 };
@@ -66,6 +67,7 @@ static Token tokens[32];
 static int nr_token;
 
 static bool check_parentheses(int p, int q);
+static bool is_operator(int type);
 static int precedence(int type);
 static int dominant_operator(int p, int q);
 static uint32_t eval(int p, int q, bool *success);
@@ -148,10 +150,32 @@ static uint32_t eval_reg(const char *s, bool *success) {
   return 0;
 }
 
+static bool is_operator(int type) {
+  return type == '+' || type == '-' || type == '*' || type == '/' ||
+         type == TK_EQ || type == TK_DEREF || type == TK_NEG;
+}
+
 uint32_t expr(char *e, bool *success) {
+  int i;
+
   if (!make_token(e)) {
     *success = false;
     return 0;
+  }
+
+  for (i = 0; i < nr_token; i ++) {
+    if (tokens[i].type == '*') {
+      if (i == 0 || tokens[i - 1].type == '(' || is_operator(tokens[i - 1].type)) {
+        tokens[i].type = TK_DEREF;
+        Log("rewrite token[%d] to TK_DEREF", i);
+      }
+    }
+    else if (tokens[i].type == '-') {
+      if (i == 0 || tokens[i - 1].type == '(' || is_operator(tokens[i - 1].type)) {
+        tokens[i].type = TK_NEG;
+        Log("rewrite token[%d] to TK_NEG", i);
+      }
+    }
   }
 
   if (nr_token == 0) {
@@ -197,6 +221,8 @@ static int precedence(int type) {
     case '-': return 2;
     case '*':
     case '/': return 3;
+    case TK_DEREF:
+    case TK_NEG: return 4;
     default: return 0;
   }
 }
@@ -275,6 +301,29 @@ static uint32_t eval(int p, int q, bool *success) {
   if (op < 0) {
     *success = false;
     return 0;
+  }
+
+  if (tokens[op].type == TK_NEG || tokens[op].type == TK_DEREF) {
+    val2 = eval(op + 1, q, success);
+    if (!*success) {
+      return 0;
+    }
+
+    switch (tokens[op].type) {
+      case TK_NEG:
+        result = -val2;
+        break;
+      case TK_DEREF:
+        result = vaddr_read(val2, 4);
+        Log("deref: addr=0x%08x data=0x%08x", val2, result);
+        break;
+      default:
+        *success = false;
+        return 0;
+    }
+
+    Log("eval leave: p=%d q=%d result=0x%08x", p, q, result);
+    return result;
   }
 
   val1 = eval(p, op - 1, success);
