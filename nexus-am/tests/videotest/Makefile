@@ -1,4 +1,4 @@
 NAME = videotest
-SRCS = main.c
+SRCS = main.cpp
 LIBS += klib
 include $(AM_HOME)/Makefile.app
