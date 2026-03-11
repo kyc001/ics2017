@@ -39,7 +39,6 @@ static int cmd_q(char *args) {
 static int cmd_help(char *args);
 
 static int cmd_si(char *args);
-
 static int cmd_si(char *args) {
   int n = 1;
   if (args != NULL) {
@@ -55,6 +54,31 @@ static int cmd_si(char *args) {
   return 0;
 }
 
+static int cmd_info(char *args);
+static int cmd_info(char *args) {
+  int i;
+  char *subcmd;
+
+  if (args == NULL) {
+    printf("Usage: info r\n");
+    return 0;
+  }
+
+  subcmd = strtok(args, " ");
+  Log("cmd_info: subcmd=%s", subcmd);
+
+  if (strcmp(subcmd, "r") == 0) {
+    for (i = 0; i < 8; i++) {
+      printf("%-3s\t0x%08x\t%u\n", regsl[i], reg_l(i), reg_l(i));
+    }
+    printf("eip\t0x%08x\t%u\n", cpu.eip, cpu.eip);
+    return 0;
+  }
+
+  printf("Unknown info subcommand '%s'\n", subcmd);
+  return 0;
+}
+
 static struct {
   char *name;
   char *description;
@@ -64,6 +88,8 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   { "si", "Execute N instructions and stop", cmd_si },
+  { "info", "Print program status", cmd_info },
+
   /* TODO: Add more commands */
 
 };
