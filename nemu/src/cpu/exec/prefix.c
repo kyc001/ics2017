@@ -1,12 +1,17 @@
 #include "cpu/exec.h"
 
 make_EHelper(real);
-make_EHelper(inv);
 
 make_EHelper(operand_size) {
   decoding.is_operand_size_16 = true;
   exec_real(eip);
   decoding.is_operand_size_16 = false;
+}
+
+make_EHelper(seg_override) {
+  // In our flat-memory model, segment override and branch-hint style prefixes
+  // such as 0x2e/0x3e can be ignored safely.
+  exec_real(eip);
 }
 
 make_EHelper(rep) {

@@ -42,6 +42,7 @@ make_EHelper(stos);
 
 make_EHelper(operand_size);
 make_EHelper(rep);
+make_EHelper(seg_override);
 
 make_EHelper(jmp);
 make_EHelper(jcc);
