@@ -75,6 +75,11 @@ static int cmd_info(char *args) {
     return 0;
   }
 
+  if (strcmp(subcmd, "w") == 0) {
+    info_watchpoints();
+    return 0;
+  }
+
   printf("Unknown info subcommand '%s'\n", subcmd);
   return 0;
 }
@@ -124,6 +129,8 @@ static int cmd_x(char *args) {
 }
 
 static int cmd_p(char *args);
+static int cmd_w(char *args);
+static int cmd_d(char *args);
 
 static int cmd_p(char *args) {
   bool success = true;
@@ -144,6 +151,34 @@ static int cmd_p(char *args) {
   return 0;
 }
 
+static int cmd_w(char *args) {
+  if (args == NULL) {
+    printf("Usage: w EXPR\n");
+    return 0;
+  }
+
+  Log("cmd_w: expr=%s", args);
+  if (!add_watchpoint(args)) {
+    printf("Bad expression.\n");
+  }
+  return 0;
+}
+
+static int cmd_d(char *args) {
+  int no;
+
+  if (args == NULL || sscanf(args, "%d", &no) != 1) {
+    printf("Usage: d N\n");
+    return 0;
+  }
+
+  Log("cmd_d: NO=%d", no);
+  if (!delete_watchpoint(no)) {
+    printf("No such watchpoint: %d\n", no);
+  }
+  return 0;
+}
+
 static struct {
   char *name;
   char *description;
@@ -156,6 +191,8 @@ static struct {
   { "info", "Print program status", cmd_info },
   { "x", "Examine memory", cmd_x },
   { "p", "Evaluate expression", cmd_p },
+  { "w", "Set a watchpoint", cmd_w },
+  { "d", "Delete a watchpoint", cmd_d },
 
   /* TODO: Add more commands */
 
