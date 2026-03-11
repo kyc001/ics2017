@@ -42,6 +42,7 @@ typedef struct NDL_Bitmap {
 int NDL_OpenDisplay(int w, int h);
 int NDL_CloseDisplay();
 int NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h);
+int NDL_BlitFrame(uint32_t *pixels, int w, int h);
 int NDL_Render();
 int NDL_WaitEvent(NDL_Event *event);
 int NDL_LoadBitmap(NDL_Bitmap *bmp, const char *filename);

@@ -3,23 +3,30 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static int has_nwm = 0;
 static uint32_t *canvas;
-static FILE *fbdev, *evtdev;
+static int fbfd = -1;
+static FILE *evtdev;
+
+typedef struct {
+  uint32_t *pixels;
+  int x, y, w, h;
+} NDL_FbBlitReq;
 
 static void get_display_info();
 static int canvas_w, canvas_h, screen_w, screen_h, pad_x, pad_y;
+static int logical_w, logical_h;
 
 int NDL_OpenDisplay(int w, int h) {
-  if (!canvas) {
+  if (canvas) {
     NDL_CloseDisplay();
   }
 
-  canvas_w = w;
-  canvas_h = h;
-  canvas = malloc(sizeof(uint32_t) * w * h);
-  assert(canvas);
+  logical_w = w;
+  logical_h = h;
 
   if (getenv("NWM_APP")) {
     has_nwm = 1;
@@ -28,23 +35,41 @@ int NDL_OpenDisplay(int w, int h) {
   }
 
   if (has_nwm) {
+    canvas_w = w;
+    canvas_h = h;
+    canvas = calloc((size_t)w * h, sizeof(uint32_t));
+    assert(canvas);
     printf("\033[X%d;%ds", w, h); fflush(stdout);
     evtdev = stdin;
   } else {
     get_display_info();
-    assert(screen_w >= canvas_w);
-    assert(screen_h >= canvas_h);
-    pad_x = (screen_w - canvas_w) / 2;
-    pad_y = (screen_h - canvas_h) / 2;
-    fbdev = fopen("/dev/fb", "w"); assert(fbdev);
+    assert(screen_w >= logical_w);
+    assert(screen_h >= logical_h);
+    canvas_w = logical_w;
+    canvas_h = logical_h;
+    pad_x = (screen_w - logical_w) / 2;
+    pad_y = (screen_h - logical_h) / 2;
+    canvas = calloc((size_t)canvas_w * canvas_h, sizeof(uint32_t));
+    assert(canvas);
+    fbfd = open("/dev/fb", O_WRONLY); assert(fbfd >= 0);
     evtdev = fopen("/dev/events", "r"); assert(evtdev);
   }
+  return 0;
 }
 
 int NDL_CloseDisplay() {
   if (canvas) {
     free(canvas);
+    canvas = NULL;
   }
+  if (fbfd >= 0) {
+    close(fbfd);
+  }
+  if (evtdev != NULL && evtdev != stdin) {
+    fclose(evtdev);
+  }
+  fbfd = -1;
+  evtdev = NULL;
   return 0;
 }
 
@@ -60,23 +85,47 @@ int NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
     }
   } else {
     for (int i = 0; i < h; i ++) {
-      for (int j = 0; j < w; j ++) {
-        canvas[(i + y) * canvas_w + (j + x)] = pixels[i * w + j];
-      }
+      memcpy(&canvas[(i + y) * canvas_w + x],
+          &pixels[i * w], (size_t)w * sizeof(uint32_t));
     }
   }
+  return 0;
+}
+
+int NDL_BlitFrame(uint32_t *pixels, int w, int h) {
+  assert(pixels);
+  if (has_nwm || w != canvas_w || h != canvas_h) {
+    NDL_DrawRect(pixels, 0, 0, w, h);
+    return NDL_Render();
+  }
+
+  NDL_FbBlitReq req = {
+    .pixels = pixels,
+    .x = pad_x,
+    .y = pad_y,
+    .w = w,
+    .h = h,
+  };
+  ssize_t ret = write(fbfd, &req, sizeof(req));
+  assert(ret == (ssize_t)sizeof(req));
+  return 0;
 }
 
 int NDL_Render() {
   if (has_nwm) {
     fflush(stdout);
   } else {
-    for (int i = 0; i < canvas_h; i ++) {
-      fseek(fbdev, ((i + pad_y) * screen_w + pad_x) * sizeof(uint32_t), SEEK_SET);
-      fwrite(&canvas[i * canvas_w], sizeof(uint32_t), canvas_w, fbdev);
-    }
-    fflush(fbdev);
+    NDL_FbBlitReq req = {
+      .pixels = canvas,
+      .x = pad_x,
+      .y = pad_y,
+      .w = canvas_w,
+      .h = canvas_h,
+    };
+    ssize_t ret = write(fbfd, &req, sizeof(req));
+    assert(ret == (ssize_t)sizeof(req));
   }
+  return 0;
 }
 
 #define keyname(k) #k,
@@ -89,13 +138,23 @@ static const char *keys[] = {
 #define numkeys ( sizeof(keys) / sizeof(keys[0]) )
 
 int NDL_WaitEvent(NDL_Event *event) {
-  char buf[256], *p = buf, ch;
+  char buf[256];
 
   while (1) {
-    while ((ch = getc(evtdev)) != -1) {
+    char *p = buf;
+    int ch;
+
+    while ((ch = getc(evtdev)) != EOF) {
       *p ++ = ch;
       assert(p - buf < sizeof(buf));
-      if (ch == '\n') break;
+      if (ch == '\n') {
+        break;
+      }
+    }
+    *p = '\0';
+
+    if (p == buf) {
+      continue;
     }
 
     if (buf[0] == 'k') {
@@ -113,10 +172,10 @@ int NDL_WaitEvent(NDL_Event *event) {
       return 0;
     }
     if (buf[0] == 't') {
-      int tsc;
-      sscanf(buf + 2, "%d", &tsc);
+      uint32_t tsc = 0;
+      assert(sscanf(buf + 2, "%u", &tsc) == 1);
       event->type = NDL_EVENT_TIMER;
-      event->data = tsc;
+      event->data = (int32_t)tsc;
       return 0;
     }
   }
@@ -140,4 +199,3 @@ static void get_display_info() {
   fclose(dispinfo);
   assert(screen_w > 0 && screen_h > 0);
 }
-

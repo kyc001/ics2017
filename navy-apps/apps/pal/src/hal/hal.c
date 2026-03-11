@@ -37,7 +37,10 @@ PAL_PollEvent(
   NDL_WaitEvent(&evt);
   
   if (evt.type == NDL_EVENT_TIMER) {
-    systime = evt.data;
+    uint32_t now = evt.data;
+    if ((int32_t)(now - systime) > 0) {
+      systime = now;
+    }
   }
 
   if (evt.type == NDL_EVENT_KEYUP || evt.type == NDL_EVENT_KEYDOWN) {
@@ -74,10 +77,9 @@ PAL_PollEvent(
 }
 
 void SDL_WaitUntil(uint32_t tick) {
-  while (systime < tick) {
-    while (PAL_PollEvent(NULL));
+  while ((int32_t)(systime - tick) < 0) {
+    PAL_PollEvent(NULL);
   }
-  if (systime > tick) return;
 }
 
 uint32_t SDL_GetTicks() {
@@ -85,6 +87,7 @@ uint32_t SDL_GetTicks() {
 }
 
 void SDL_Delay(uint32_t ms) {
+  SDL_WaitUntil(SDL_GetTicks() + ms);
 }
 
 static uint8_t vmem[W * H];
@@ -94,12 +97,10 @@ static intptr_t VMEM_ADDR = (intptr_t)&vmem[0];
 static uint32_t palette[256];
 
 static void redraw() {
-  for (int i = 0; i < W; i ++)
-    for (int j = 0; j < H; j ++)
-      fb[i + j * W] = palette[vmem[i + j * W]];
-
-  NDL_DrawRect(fb, 0, 0, W, H);
-  NDL_Render();
+  for (int i = 0; i < W * H; i ++) {
+    fb[i] = palette[vmem[i]];
+  }
+  NDL_BlitFrame(fb, W, H);
 }
 
 void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, 
@@ -125,11 +126,14 @@ void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect,
    */
 
   //fprintf(stderr, "(%d, %d) -> (%d, %d), %d x %d\n", sx, sy, dx, dy, w, h);
-  for (int i = 0; i < w; i ++)
+  if (sx == 0 && dx == 0 && w == src->w && w == dst->w) {
+    memcpy(dst->pixels + dy * dst->w, src->pixels + sy * src->w, (size_t)w * h);
+  } else {
     for (int j = 0; j < h; j ++) {
-      uint8_t idx = src->pixels[(sx + i) + (sy + j) * src->w];
-      dst->pixels[(dx + i) + (dy + j) * dst->w] = idx;
+      memcpy(dst->pixels + (dy + j) * dst->w + dx,
+          src->pixels + (sy + j) * src->w + sx, w);
     }
+  }
 }
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
@@ -144,10 +148,9 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
   if(dst->h - dy < h) { h = dst->h - dy; }
 
   // TODO: color is uint32_t, what about palette?
-  for (int i = 0; i < w; i ++)
-    for (int j = 0; j < h; j ++) {
-      dst->pixels[(dx + i) + (dy + j) * dst->w] = color;
-    }
+  for (int j = 0; j < h; j ++) {
+    memset(dst->pixels + (dy + j) * dst->w + dx, color, w);
+  }
 
   /* Fill the rectangle area described by `dstrect'
    * in surface `dst' with color `color'. If dstrect is
@@ -185,7 +188,7 @@ void SDL_SetPalette(SDL_Surface *s, int flags, SDL_Color *colors,
       uint8_t r = colors[i].r;
       uint8_t g = colors[i].g;
       uint8_t b = colors[i].b;
-      palette[i] = (r << 16) | (g << 8) | b;
+      palette[i] = 0xff000000u | (r << 16) | (g << 8) | b;
     }
     redraw();
   }
