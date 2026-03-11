@@ -10,7 +10,8 @@
 enum {
   TK_NOTYPE = 256, TK_EQ,
   TK_NUM, TK_HEX, TK_REG,
-  TK_DEREF, TK_NEG
+  TK_DEREF, TK_NEG,
+  TK_NEQ, TK_AND
 
   /* TODO: Add more token types */
 };
@@ -34,7 +35,9 @@ static struct rule {
   {"/", '/'},
   {"\\(", '('},
   {"\\)", ')'},
-  {"==", TK_EQ}                 // equal
+  {"==", TK_EQ},                // equal
+  {"!=", TK_NEQ},
+  {"&&", TK_AND}
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]))
@@ -152,7 +155,8 @@ static uint32_t eval_reg(const char *s, bool *success) {
 
 static bool is_operator(int type) {
   return type == '+' || type == '-' || type == '*' || type == '/' ||
-         type == TK_EQ || type == TK_DEREF || type == TK_NEG;
+         type == TK_EQ || type == TK_NEQ || type == TK_AND ||
+         type == TK_DEREF || type == TK_NEG;
 }
 
 uint32_t expr(char *e, bool *success) {
@@ -216,13 +220,15 @@ static bool check_parentheses(int p, int q) {
 
 static int precedence(int type) {
   switch (type) {
-    case TK_EQ: return 1;
+    case TK_AND: return 1;
+    case TK_EQ:
+    case TK_NEQ: return 2;
     case '+':
-    case '-': return 2;
+    case '-': return 3;
     case '*':
-    case '/': return 3;
+    case '/': return 4;
     case TK_DEREF:
-    case TK_NEG: return 4;
+    case TK_NEG: return 5;
     default: return 0;
   }
 }
@@ -348,6 +354,8 @@ static uint32_t eval(int p, int q, bool *success) {
       result = val1 / val2;
       break;
     case TK_EQ: result = (val1 == val2); break;
+    case TK_NEQ: result = (val1 != val2); break;
+    case TK_AND: result = (val1 && val2); break;
     default:
       *success = false;
       return 0;
