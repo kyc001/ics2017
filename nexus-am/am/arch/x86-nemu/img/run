@@ -2,10 +2,9 @@
 
 set -e
 
-# In headless environments, SDL init will block or fail unless we provide a
-# dummy video backend. Keep real windows on normal desktops by only falling
-# back when no display backend is configured.
-if [ -z "${SDL_VIDEODRIVER:-}" ] && [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+# In container/devbox setups DISPLAY is often set but unusable. Default to the
+# dummy backend unless the user explicitly asks for a real host display.
+if [ -z "${SDL_VIDEODRIVER:-}" ] && [ "${NEMU_USE_HOST_DISPLAY:-0}" != "1" ]; then
   export SDL_VIDEODRIVER=dummy
 fi
 
