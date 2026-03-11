@@ -58,19 +58,61 @@ make_EHelper(cmp) {
 }
 
 make_EHelper(inc) {
-  TODO();
+  rtl_get_CF(&t3);
+  rtl_addi(&t2, &id_dest->val, 1);
+  operand_write(id_dest, &t2);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_xor(&t0, &id_dest->val, &t2);
+  rtl_msb(&t1, &id_dest->val, id_dest->width);
+  rtl_not(&t1);
+  rtl_shli(&t1, &t1, id_dest->width * 8 - 1);
+  rtl_and(&t0, &t0, &t1);
+  rtl_msb(&t0, &t0, id_dest->width);
+  rtl_set_OF(&t0);
+  rtl_set_CF(&t3);
+
+  Log("pa2-debug: inc result=0x%08x", t2);
 
   print_asm_template1(inc);
 }
 
 make_EHelper(dec) {
-  TODO();
+  rtl_get_CF(&t3);
+  rtl_subi(&t2, &id_dest->val, 1);
+  operand_write(id_dest, &t2);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_xor(&t0, &id_dest->val, &t2);
+  rtl_msb(&t1, &id_dest->val, id_dest->width);
+  rtl_shli(&t1, &t1, id_dest->width * 8 - 1);
+  rtl_and(&t0, &t0, &t1);
+  rtl_msb(&t0, &t0, id_dest->width);
+  rtl_set_OF(&t0);
+  rtl_set_CF(&t3);
+
+  Log("pa2-debug: dec result=0x%08x", t2);
 
   print_asm_template1(dec);
 }
 
 make_EHelper(neg) {
-  TODO();
+  rtl_li(&t0, 0);
+  rtl_sub(&t2, &t0, &id_dest->val);
+  operand_write(id_dest, &t2);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_neq0(&t0, &id_dest->val);
+  rtl_set_CF(&t0);
+
+  rtl_xor(&t0, &id_dest->val, &t2);
+  rtl_neq0(&t1, &id_dest->val);
+  rtl_shli(&t1, &t1, id_dest->width * 8 - 1);
+  rtl_and(&t0, &t0, &t1);
+  rtl_msb(&t0, &t0, id_dest->width);
+  rtl_set_OF(&t0);
+
+  Log("pa2-debug: neg result=0x%08x", t2);
 
   print_asm_template1(neg);
 }
