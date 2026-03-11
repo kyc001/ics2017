@@ -2,6 +2,7 @@
 #define __MEMORY_H__
 
 #include "common.h"
+#include "device/mmio.h"
 
 #define PMEM_SIZE (128 * 1024 * 1024)
 
@@ -13,6 +14,11 @@ extern uint8_t pmem[];
 #define host_to_guest(p) ((paddr_t)((void *)p - (void *)pmem))
 
 static inline uint32_t paddr_read(paddr_t addr, int len) {
+  int map_NO = is_mmio(addr);
+  if (map_NO != -1) {
+    return mmio_read(addr, len, map_NO);
+  }
+
   Assert(addr + len - 1 < PMEM_SIZE,
       "physical address(0x%08x) is out of bound", addr);
   uint8_t *p = (uint8_t *)guest_to_host(addr);
@@ -25,6 +31,12 @@ static inline uint32_t paddr_read(paddr_t addr, int len) {
 }
 
 static inline void paddr_write(paddr_t addr, int len, uint32_t data) {
+  int map_NO = is_mmio(addr);
+  if (map_NO != -1) {
+    mmio_write(addr, len, data, map_NO);
+    return;
+  }
+
   Assert(addr + len - 1 < PMEM_SIZE,
       "physical address(0x%08x) is out of bound", addr);
   uint8_t *p = (uint8_t *)guest_to_host(addr);
