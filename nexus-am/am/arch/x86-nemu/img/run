@@ -1,31 +1,11 @@
 #!/bin/bash
 
-set -e
-
-warn_host_display_env() {
-  if [ "${NEMU_USE_HOST_DISPLAY:-0}" != "1" ]; then
-    return
-  fi
-
-  if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-    echo "x86-nemu interactive run requested, but no DISPLAY/WAYLAND_DISPLAY is set." >&2
-    echo "Run this from a real desktop session, or unset NEMU_USE_HOST_DISPLAY to use SDL_VIDEODRIVER=dummy." >&2
-    exit 1
-  fi
-
-  if [ -z "${XAUTHORITY:-}" ] && [ -z "${XDG_RUNTIME_DIR:-}" ]; then
-    echo "warning: host display requested, but neither XAUTHORITY nor XDG_RUNTIME_DIR is set." >&2
-    echo "warning: in container shells this often means SDL video init will hang before 'Welcome to NEMU!'." >&2
-    echo "warning: use a desktop terminal with real GUI access, or unset NEMU_USE_HOST_DISPLAY for headless smoke tests." >&2
-  fi
-}
-
-# In container/devbox setups DISPLAY is often set but unusable. Default to the
-# dummy backend unless the user explicitly asks for a real host display.
-if [ -z "${SDL_VIDEODRIVER:-}" ] && [ "${NEMU_USE_HOST_DISPLAY:-0}" != "1" ]; then
-  export SDL_VIDEODRIVER=dummy
+if [ "${NEMU_USE_HOST_DISPLAY:-0}" = "1" ] && \
+   [ -n "${DISPLAY:-}" ] && \
+   [ -z "${XAUTHORITY:-}" ] && \
+   [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+  echo "warning: host display requested, but neither XAUTHORITY nor XDG_RUNTIME_DIR is set." >&2
+  echo "warning: if SDL init stalls before 'Welcome to NEMU!', try a real desktop session." >&2
 fi
-
-warn_host_display_env
 
 make -C "$NEMU_HOME" run ARGS="-b -l `dirname $1`/nemu-log.txt $1.bin"

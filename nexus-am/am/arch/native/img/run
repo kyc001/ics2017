@@ -1,14 +1,3 @@
 #!/bin/bash
 
-if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-  echo "native interactive run requires a usable host display, but no DISPLAY/WAYLAND_DISPLAY is set." >&2
-  echo "Run this from a real desktop session. In headless/container shells, native keytest/videotest will appear stuck waiting for SDL." >&2
-  exit 1
-fi
-
-if [ -z "${XAUTHORITY:-}" ] && [ -z "${XDG_RUNTIME_DIR:-}" ]; then
-  echo "warning: DISPLAY is set, but neither XAUTHORITY nor XDG_RUNTIME_DIR is set." >&2
-  echo "warning: if SDL cannot open the host display, native interactive apps may hang without output." >&2
-fi
-
 $1
