@@ -23,6 +23,7 @@ static SDL_Texture *texture;
 
 static uint32_t (*vmem) [SCREEN_W];
 static uint32_t *screensize_port_base;
+static bool screen_dirty = true;
 
 typedef struct {
   int ret;
@@ -64,6 +65,14 @@ static void enable_dummy_backend(bool enable_terminal_keys, const char *reason) 
   setenv("SDL_VIDEODRIVER", "dummy", 1);
   if (enable_terminal_keys) {
     setenv("NEMU_TERMINAL_KEYS_ACTIVE", "1", 1);
+  }
+}
+
+static void vga_vmem_io_handler(paddr_t addr, int len, bool is_write) {
+  (void)addr;
+  (void)len;
+  if (is_write) {
+    screen_dirty = true;
   }
 }
 
@@ -109,10 +118,14 @@ static int probe_host_video_backend(SdlVideoProbeResult *result, int timeout_ms)
 }
 
 void update_screen() {
+  if (!screen_dirty) {
+    return;
+  }
   SDL_UpdateTexture(texture, NULL, vmem, SCREEN_W * sizeof(vmem[0][0]));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
+  screen_dirty = false;
 }
 
 void init_vga() {
@@ -159,6 +172,6 @@ void init_vga() {
 
   screensize_port_base = add_pio_map(SCREEN_PORT, 4, NULL);
   *screensize_port_base = (SCREEN_W << 16) | SCREEN_H;
-  vmem = add_mmio_map(VMEM, 0x80000, NULL);
+  vmem = add_mmio_map(VMEM, 0x80000, vga_vmem_io_handler);
 }
 #endif	/* HAS_IOE */
