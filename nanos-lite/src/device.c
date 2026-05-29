@@ -56,7 +56,7 @@ size_t events_read(void *buf, size_t offset, size_t len) {
     if (n <= 0) {
       return 0;
     }
-    event_len = (size_t)n < sizeof(event) ? (size_t)n : sizeof(event) - 1;
+    event_len = strlen(event);
     event_pos = 0;
   }
 
