@@ -108,7 +108,7 @@ size_t fs_write(int fd, const void *buf, size_t len) {
   if (writer == invalid_write) {
     return 0;
   }
-  if (f->write == NULL && f->size != 0) {
+  if (f->size != 0) {
     size_t rest = f->size > open_table[fd].open_offset ? f->size - open_table[fd].open_offset : 0;
     if (len > rest) {
       len = rest;

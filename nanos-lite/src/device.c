@@ -31,20 +31,27 @@ static const char *keyname[256] __attribute__((used)) = {
 
 size_t events_read(void *buf, size_t offset, size_t len) {
   (void)offset;
+  if (len == 0) {
+    return 0;
+  }
+
   int key = _read_key();
+  int n;
   if (key == _KEY_NONE) {
-    int n = snprintf(buf, len, "t %u\n", (unsigned)_uptime());
-    return n > 0 ? n : 0;
+    n = snprintf(buf, len, "t %u\n", (unsigned)_uptime());
+  } else {
+    bool down = false;
+    if (key & 0x8000) {
+      key ^= 0x8000;
+      down = true;
+    }
+    n = snprintf(buf, len, "k%c %s\n", down ? 'd' : 'u', keyname[key]);
   }
 
-  bool down = false;
-  if (key & 0x8000) {
-    key ^= 0x8000;
-    down = true;
+  if (n <= 0) {
+    return 0;
   }
-
-  int n = snprintf(buf, len, "k%c %s\n", down ? 'd' : 'u', keyname[key]);
-  return n > 0 ? n : 0;
+  return (size_t)n < len ? (size_t)n : len - 1;
 }
 
 static char dispinfo[128] __attribute__((used));
