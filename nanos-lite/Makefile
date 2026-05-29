@@ -1,6 +1,8 @@
 NAME = nanos-lite
 SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
 LIBS = klib
+DEFAULT_PROGRAM ?= /bin/dummy
+CFLAGS += -DDEFAULT_PROGRAM=\"$(DEFAULT_PROGRAM)\"
 include $(AM_HOME)/Makefile.app
 
 FSIMG_PATH = $(NAVY_HOME)/fsimg
