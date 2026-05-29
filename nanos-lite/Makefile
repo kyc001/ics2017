@@ -11,7 +11,9 @@ RAMDISK_FILE = build/ramdisk.img
 OBJCOPY_FLAG = -S --remove-section=.note.gnu.property --set-section-flags .bss=alloc,contents -O binary
 OBJCOPY_FILE = $(NAVY_HOME)/tests/dummy/build/dummy-x86
 
-.PHONY: update update-ramdisk-objcopy update-ramdisk-fsimg update-fsimg
+.PHONY: update update-ramdisk-objcopy update-ramdisk-fsimg update-fsimg FORCE
+
+$(filter %/src/main.o %/./src/main.o,$(OBJS)): FORCE
 
 update-ramdisk-objcopy:
 	$(OBJCOPY) $(OBJCOPY_FLAG) $(OBJCOPY_FILE) $(RAMDISK_FILE)
