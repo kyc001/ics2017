@@ -1,19 +1,23 @@
 NAME = nanos-lite
 SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
 LIBS = klib
+DEFAULT_PROGRAM ?= /bin/dummy
+CFLAGS += -DDEFAULT_PROGRAM=\"$(DEFAULT_PROGRAM)\"
 include $(AM_HOME)/Makefile.app
 
 FSIMG_PATH = $(NAVY_HOME)/fsimg
 RAMDISK_FILE = build/ramdisk.img
 
-OBJCOPY_FLAG = -S --set-section-flags .bss=alloc,contents -O binary
+OBJCOPY_FLAG = -S --remove-section=.note.gnu.property --set-section-flags .bss=alloc,contents -O binary
 OBJCOPY_FILE = $(NAVY_HOME)/tests/dummy/build/dummy-x86
 
-.PHONY: update update-ramdisk-objcopy update-ramdisk-fsimg update-fsimg
+.PHONY: update update-ramdisk-objcopy update-ramdisk-fsimg update-fsimg FORCE
+
+$(filter %/src/main.o %/./src/main.o,$(OBJS)): FORCE
 
 update-ramdisk-objcopy:
 	$(OBJCOPY) $(OBJCOPY_FLAG) $(OBJCOPY_FILE) $(RAMDISK_FILE)
-	touch src/files.h
+	: > src/files.h
 
 update-fsimg:
 	$(MAKE) -s -C $(NAVY_HOME) ISA=$(ISA)
@@ -31,5 +35,5 @@ update-ramdisk-fsimg: update-fsimg
 src/syscall.h: $(NAVY_HOME)/libs/libos/src/syscall.h
 	ln -sf $^ $@
 
-update: update-ramdisk-objcopy src/syscall.h
+update: update-ramdisk-fsimg src/syscall.h
 	@touch src/initrd.S

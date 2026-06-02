@@ -1,8 +1,12 @@
 #include "common.h"
 
 /* Uncomment these macros to enable corresponding functionality. */
-//#define HAS_ASYE
+#define HAS_ASYE
 //#define HAS_PTE
+
+#ifndef DEFAULT_PROGRAM
+#define DEFAULT_PROGRAM "/bin/dummy"
+#endif
 
 void init_mm(void);
 void init_ramdisk(void);
@@ -30,7 +34,7 @@ int main() {
 
   init_fs();
 
-  uint32_t entry = loader(NULL, NULL);
+  uint32_t entry = loader(NULL, DEFAULT_PROGRAM);
   ((void (*)(void))entry)();
 
   panic("Should not reach here");

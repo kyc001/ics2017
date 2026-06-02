@@ -1,6 +1,10 @@
 *.*
 *
 !*/
+.codex/
+.claude/
+.trellis/
+agents/
 !Makefile
 !README.md
 !.gitignore
