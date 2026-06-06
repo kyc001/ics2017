@@ -1572,7 +1572,8 @@ PAL_InterpretInstruction(
       // Set background music
       //
       gpGlobals->wNumMusic = pScript->rgwOperand[0];
-      PAL_PlayMUS(pScript->rgwOperand[0], (pScript->rgwOperand[0] != 0x3D), pScript->rgwOperand[1]);
+      PAL_PlayMUS(pScript->rgwOperand[0], (pScript->rgwOperand[0] != 0x3D),
+         int2F(pScript->rgwOperand[1]));
       break;
 
    case 0x0044:
@@ -2145,7 +2146,7 @@ PAL_InterpretInstruction(
       // Stop current playing music
       //
       PAL_PlayMUS(0, FALSE,
-         (pScript->rgwOperand[0] == 0) ? 2.0f : (FLOAT)(pScript->rgwOperand[0]) * 2);
+         (pScript->rgwOperand[0] == 0) ? int2F(2) : int2F(pScript->rgwOperand[0] * 2));
       gpGlobals->wNumMusic = 0;
       break;
 
@@ -2932,7 +2933,7 @@ PAL_InterpretInstruction(
       //
       if (!SOUND_PlayCDA(pScript->rgwOperand[0]))
       {
-         PAL_PlayMUS(pScript->rgwOperand[1], TRUE, 0);
+         PAL_PlayMUS(pScript->rgwOperand[1], TRUE, int2F(0));
       }
       break;
 

@@ -332,7 +332,7 @@ PAL_BattleMain(
    //
    // Fade out the music and delay for a while
    //
-   PAL_PlayMUS(0, FALSE, 1);
+   PAL_PlayMUS(0, FALSE, int2F(1));
    UTIL_Delay(200);
 
    //
@@ -343,7 +343,7 @@ PAL_BattleMain(
    //
    // Play the battle music
    //
-   PAL_PlayMUS(gpGlobals->wNumBattleMusic, TRUE, 0);
+   PAL_PlayMUS(gpGlobals->wNumBattleMusic, TRUE, int2F(0));
 
    //
    // Fade in the screen when needed
@@ -655,7 +655,7 @@ PAL_BattleWon(
       //
       // Play the "battle win" music
       //
-      PAL_PlayMUS(g_Battle.fIsBoss ? 2 : 3, FALSE, 0);
+      PAL_PlayMUS(g_Battle.fIsBoss ? 2 : 3, FALSE, int2F(0));
 
       //
       // Show the message about the total number of exp. and cash gained
@@ -955,18 +955,22 @@ PAL_BattleWon(
       }
       else if (g_Battle.iExpGained > 0)
       {
-         FLOAT f =
-            (gpGlobals->g.rgLevelUpExp[gpGlobals->g.PlayerRoles.rgwLevel[w]] / 5.0f) / g_Battle.iExpGained;
+         FLOAT f = F_div_int(
+            F_div_int(int2F(gpGlobals->g.rgLevelUpExp[gpGlobals->g.PlayerRoles.rgwLevel[w]]), 5),
+            g_Battle.iExpGained);
 
-         if (f < 2)
+         if (f < int2F(2))
          {
-            f = 2;
+            f = int2F(2);
          }
 
          gpGlobals->g.PlayerRoles.rgwHP[w] +=
-            (gpGlobals->g.PlayerRoles.rgwMaxHP[w] - gpGlobals->g.PlayerRoles.rgwHP[w]) / f;
+            F2int(F_div_F(
+               int2F(gpGlobals->g.PlayerRoles.rgwMaxHP[w] - gpGlobals->g.PlayerRoles.rgwHP[w]), f));
          gpGlobals->g.PlayerRoles.rgwMP[w] +=
-            (gpGlobals->g.PlayerRoles.rgwMaxMP[w] - gpGlobals->g.PlayerRoles.rgwMP[w]) / f / 1.2;
+            F2int(F_div_F(
+               F_div_F(int2F(gpGlobals->g.PlayerRoles.rgwMaxMP[w] - gpGlobals->g.PlayerRoles.rgwMP[w]), f),
+               f2F(1.2f)));
       }
 #endif
    }
@@ -1462,7 +1466,7 @@ PAL_StartBattle(
 
    gpGlobals->fInBattle = FALSE;
 
-   PAL_PlayMUS(gpGlobals->wNumMusic, TRUE, 1);
+   PAL_PlayMUS(gpGlobals->wNumMusic, TRUE, int2F(1));
 
    //
    // Restore the screen waving effects

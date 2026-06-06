@@ -41,7 +41,7 @@ BOOL         g_fUseMidi = FALSE;
 #endif
 
 #ifdef __SYMBIAN32__
-INT          g_iVolume  = SDL_MIX_MAXVOLUME * 0.1;
+INT          g_iVolume  = SDL_MIX_MAXVOLUME / 10;
 #endif
 
 #ifdef PAL_CLASSIC

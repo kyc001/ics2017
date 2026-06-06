@@ -319,7 +319,7 @@ PAL_BattleUIIsActionValid(
             gpGlobals->rgPlayerStatus[w][kStatusSleep] != 0 ||
             gpGlobals->rgPlayerStatus[w][kStatusConfused] != 0 ||
             gpGlobals->rgPlayerStatus[w][kStatusSilence] != 0 ||
-            g_Battle.rgPlayer[i].flTimeMeter < 100 ||
+            g_Battle.rgPlayer[i].flTimeMeter < int2F(100) ||
             g_Battle.rgPlayer[i].state == kFighterAct)
 #else
          if (gpGlobals->g.PlayerRoles.rgwHP[w] < gpGlobals->g.PlayerRoles.rgwMaxHP[w] / 5 ||
@@ -1269,9 +1269,9 @@ PAL_BattleUIUpdate(
 
                for (i = 0; i <= gpGlobals->wMaxPartyMemberIndex; i++)
                {
-                  if (g_Battle.rgPlayer[i].flTimeMeter >= 100)
+                  if (g_Battle.rgPlayer[i].flTimeMeter >= int2F(100))
                   {
-                     g_Battle.rgPlayer[i].flTimeMeter += 100; // HACKHACK: Prevent the time meter from going below 100
+                     g_Battle.rgPlayer[i].flTimeMeter += int2F(100); // HACKHACK: Prevent the time meter from going below 100
 
                      if ((g_Battle.rgPlayer[i].flTimeMeter < flMin || flMin < 0) &&
                         i != (int)g_Battle.UI.wCurPlayerIndex &&

@@ -1,7 +1,7 @@
 NAME = nanos-lite
 SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
 LIBS = klib
-DEFAULT_PROGRAM ?= /bin/dummy
+DEFAULT_PROGRAM ?= /bin/pal
 CFLAGS += -DDEFAULT_PROGRAM=\"$(DEFAULT_PROGRAM)\"
 include $(AM_HOME)/Makefile.app
 

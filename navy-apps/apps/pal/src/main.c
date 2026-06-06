@@ -333,7 +333,7 @@ PAL_SplashScreen(
    if (!SOUND_PlayCDA(7))
    {
       fUseCD = FALSE;
-      PAL_PlayMUS(NUM_RIX_TITLE, TRUE, 2);
+      PAL_PlayMUS(NUM_RIX_TITLE, TRUE, int2F(2));
    }
 
    //
@@ -501,7 +501,7 @@ PAL_SplashScreen(
 
    if (!fUseCD)
    {
-      PAL_PlayMUS(0, FALSE, 1);
+      PAL_PlayMUS(0, FALSE, int2F(1));
    }
 
    PAL_FadeOut(1);

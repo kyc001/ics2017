@@ -117,11 +117,11 @@ PAL_CalcBaseDamage(
    //
    if (wAttackStrength > wDefense)
    {
-      sDamage = F2int(int2F(wAttackStrength << 1) - F_mul_int(f2F(1.6), wDefense) + f2F(0.5));
+      sDamage = F2int(int2F(wAttackStrength << 1) - F_mul_int(f2F(1.6f), wDefense) + f2F(0.5f));
    }
-   else if (wAttackStrength > F2int(F_mul_int(f2F(0.6), wDefense)))
+   else if (wAttackStrength > F2int(F_mul_int(f2F(0.6f), wDefense)))
    {
-      sDamage = F2int(int2F(wAttackStrength) - F_mul_int(f2F(0.6), wDefense) + f2F(0.5));
+      sDamage = F2int(int2F(wAttackStrength) - F_mul_int(f2F(0.6f), wDefense) + f2F(0.5f));
    }
    else
    {
@@ -382,8 +382,7 @@ PAL_UpdateTimeChargingUnit(
    }
    else
    {
-      g_Battle.flTimeChargingUnit /= 1.2f;
-      g_Battle.flTimeChargingUnit = F_div_F(g_Battle.flTimeChargingUnit, f2F(1.2));
+      g_Battle.flTimeChargingUnit = F_div_F(g_Battle.flTimeChargingUnit, f2F(1.2f));
    }
 }
 
@@ -1006,7 +1005,7 @@ PAL_BattlePlayerCheckReady(
 
 --*/
 {
-   FLOAT   flMax = 0;
+   FLOAT   flMax = int2F(0);
    int     iMax = 0, i;
 
    //
@@ -1017,7 +1016,7 @@ PAL_BattlePlayerCheckReady(
       if (g_Battle.rgPlayer[i].state == kFighterCom ||
          (g_Battle.rgPlayer[i].state == kFighterAct && g_Battle.rgPlayer[i].action.ActionType == kBattleActionCoopMagic))
       {
-         flMax = 0;
+         flMax = int2F(0);
          break;
       }
       else if (g_Battle.rgPlayer[i].state == kFighterWait)
@@ -1170,7 +1169,7 @@ PAL_BattleStartFrame(
       {
       case kFighterWait:
          flMax = PAL_GetTimeChargingSpeed(PAL_GetEnemyDexterity(i));
-         flMax /= (gpGlobals->fAutoBattle ? 2 : 1);
+         flMax = F_div_int(flMax, gpGlobals->fAutoBattle ? 2 : 1);
 
          if (flMax != 0)
          {
@@ -1424,7 +1423,7 @@ PAL_BattleStartFrame(
                g_Battle.ActionQueue[j].wIndex = i;
                g_Battle.ActionQueue[j].wDexterity = PAL_GetEnemyDexterity(i);
                g_Battle.ActionQueue[j].wDexterity = F2int(
-					   F_mul_int(RandomFloat(f2F(0.9), f2F(1.1)),
+					   F_mul_int(RandomFloat(f2F(0.9f), f2F(1.1f)),
 						   g_Battle.ActionQueue[j].wDexterity));
 
                j++;
@@ -1435,7 +1434,7 @@ PAL_BattleStartFrame(
                   g_Battle.ActionQueue[j].wIndex = i;
                   g_Battle.ActionQueue[j].wDexterity = PAL_GetEnemyDexterity(i);
 				  g_Battle.ActionQueue[j].wDexterity = F2int(
-						  F_mul_int(RandomFloat(f2F(0.9), f2F(1.1)),
+						  F_mul_int(RandomFloat(f2F(0.9f), f2F(1.1f)),
 							  g_Battle.ActionQueue[j].wDexterity));
 
                   j++;
@@ -1508,7 +1507,7 @@ PAL_BattleStartFrame(
                      wDexterity /= 2;
                   }
 
-				  wDexterity = F2int(F_mul_int(RandomFloat(f2F(0.9), f2F(1.1)),
+				  wDexterity = F2int(F_mul_int(RandomFloat(f2F(0.9f), f2F(1.1f)),
 							  wDexterity));
 
                   g_Battle.ActionQueue[j].wDexterity = wDexterity;
@@ -3244,7 +3243,7 @@ PAL_BattlePlayerValidateAction(
             gpGlobals->rgPlayerStatus[w][kStatusSilence] > 0 ||
             gpGlobals->rgPlayerStatus[w][kStatusSleep] > 0 ||
             gpGlobals->rgPlayerStatus[w][kStatusConfused] > 0 ||
-            g_Battle.rgPlayer[i].flTimeMeter < 100 ||
+            g_Battle.rgPlayer[i].flTimeMeter < int2F(100) ||
             (g_Battle.rgPlayer[i].state == kFighterAct && i != wPlayerIndex))
 #endif
          {
@@ -3438,7 +3437,7 @@ PAL_BattlePlayerPerformAction(
                fCritical = TRUE;
             }
 
-            sDamage = F2int(F_mul_int(RandomFloat(int2F(1), f2F(1.125)), sDamage));
+            sDamage = F2int(F_mul_int(RandomFloat(int2F(1), f2F(1.125f)), sDamage));
 
             if (sDamage <= 0)
             {
@@ -3501,7 +3500,7 @@ PAL_BattlePlayerPerformAction(
 
                sDamage /= division;
 
-			   sDamage = F2int(F_mul_int(RandomFloat(int2F(1), f2F(1.125)), sDamage));
+			   sDamage = F2int(F_mul_int(RandomFloat(int2F(1), f2F(1.125f)), sDamage));
 
                if (sDamage <= 0)
                {
@@ -4133,11 +4132,12 @@ PAL_BattlePlayerPerformAction(
 
          if (gpGlobals->bBattleSpeed > 1)
          {
-            g_Battle.iHidingTime *= 1 + (gpGlobals->bBattleSpeed - 1) * 0.5;
+            g_Battle.iHidingTime =
+               g_Battle.iHidingTime * (gpGlobals->bBattleSpeed + 1) / 2;
          }
          else
          {
-            g_Battle.iHidingTime *= 1.2;
+            g_Battle.iHidingTime = g_Battle.iHidingTime * 6 / 5;
          }
 #endif
          PAL_BattleBackupScene();
