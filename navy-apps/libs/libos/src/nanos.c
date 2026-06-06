@@ -29,17 +29,22 @@ int _write(int fd, void *buf, size_t count){
   return _syscall_(SYS_write, fd, (uintptr_t)buf, count);
 }
 
-extern char _end;
-
 void *_sbrk(intptr_t increment){
-  static uintptr_t cur_brk = (uintptr_t)&_end;
-  uintptr_t old_brk = cur_brk;
-  uintptr_t new_brk = cur_brk + increment;
-  if (_syscall_(SYS_brk, new_brk, 0, 0) == 0) {
-    cur_brk = new_brk;
-    return (void *)old_brk;
+  extern char end;
+  static uintptr_t program_break = 0;
+  if (program_break == 0) {
+    program_break = (uintptr_t)&end;
   }
-  return (void *)-1;
+
+  uintptr_t old_break = program_break;
+  uintptr_t new_break = old_break + increment;
+  int ret = _syscall_(SYS_brk, new_break, 0, 0);
+  if (ret != 0) {
+    return (void *)-1;
+  }
+
+  program_break = new_break;
+  return (void *)old_break;
 }
 
 int _read(int fd, void *buf, size_t count) {
@@ -63,8 +68,7 @@ int _fstat(int fd, struct stat *buf) {
 }
 
 int execve(const char *fname, char * const argv[], char *const envp[]) {
-  assert(0);
-  return -1;
+  return _syscall_(SYS_execve, (uintptr_t)fname, (uintptr_t)argv, (uintptr_t)envp);
 }
 
 int _execve(const char *fname, char * const argv[], char *const envp[]) {
@@ -119,10 +123,7 @@ clock_t _times(void *buf) {
 }
 
 int _gettimeofday(struct timeval *tv) {
-  assert(0);
-  tv->tv_sec = 0;
-  tv->tv_usec = 0;
-  return 0;
+  return _syscall_(SYS_gettimeofday, (uintptr_t)tv, 0, 0);
 }
 
 int _fcntl(int fd, int cmd, ... ) {

@@ -31,42 +31,41 @@ static const char *keyname[256] __attribute__((used)) = {
 
 size_t events_read(void *buf, size_t offset, size_t len) {
   (void)offset;
-  static char event[32];
-  static size_t event_len = 0;
+  static char event[64];
   static size_t event_pos = 0;
-
+  static size_t event_len = 0;
   if (len == 0) {
     return 0;
   }
 
-  if (event_pos >= event_len) {
+  if (event_pos == event_len) {
     int key = _read_key();
-    int n;
     if (key == _KEY_NONE) {
-      n = snprintf(event, sizeof(event), "t %u\n", (unsigned)_uptime());
-    } else {
+      snprintf(event, sizeof(event), "t %u\n", (unsigned)_uptime());
+    }
+    else {
       bool down = false;
       if (key & 0x8000) {
         key ^= 0x8000;
         down = true;
       }
-      n = snprintf(event, sizeof(event), "k%c %s\n", down ? 'd' : 'u', keyname[key]);
+      if (down && key == _KEY_F12) {
+        extern void switch_game(void);
+        switch_game();
+      }
+      snprintf(event, sizeof(event), "k%c %s\n", down ? 'd' : 'u', keyname[key]);
     }
-
-    if (n <= 0) {
-      return 0;
-    }
-    event_len = strlen(event);
     event_pos = 0;
+    event_len = strlen(event);
   }
 
-  size_t rest = event_len - event_pos;
-  if (len > rest) {
-    len = rest;
+  size_t n = event_len - event_pos;
+  if (n > len) {
+    n = len;
   }
-  memcpy(buf, event + event_pos, len);
-  event_pos += len;
-  return len;
+  memcpy(buf, event + event_pos, n);
+  event_pos += n;
+  return n;
 }
 
 static char dispinfo[128] __attribute__((used));

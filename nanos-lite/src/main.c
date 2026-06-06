@@ -2,10 +2,18 @@
 
 /* Uncomment these macros to enable corresponding functionality. */
 #define HAS_ASYE
-//#define HAS_PTE
+#define HAS_PTE
 
 #ifndef DEFAULT_PROGRAM
-#define DEFAULT_PROGRAM "/bin/dummy"
+#define DEFAULT_PROGRAM "/bin/pal"
+#endif
+
+#ifndef SECOND_PROGRAM
+#define SECOND_PROGRAM "/bin/hello"
+#endif
+
+#ifndef THIRD_PROGRAM
+#define THIRD_PROGRAM "/bin/videotest"
 #endif
 
 void init_mm(void);
@@ -14,6 +22,7 @@ void init_device(void);
 void init_irq(void);
 void init_fs(void);
 uint32_t loader(_Protect *, const char *);
+void load_prog(const char *filename);
 
 int main() {
 #ifdef HAS_PTE
@@ -34,8 +43,15 @@ int main() {
 
   init_fs();
 
+#ifdef HAS_ASYE
+  load_prog(DEFAULT_PROGRAM);
+  load_prog(SECOND_PROGRAM);
+  load_prog(THIRD_PROGRAM);
+  _trap();
+#else
   uint32_t entry = loader(NULL, DEFAULT_PROGRAM);
   ((void (*)(void))entry)();
+#endif
 
   panic("Should not reach here");
 }
