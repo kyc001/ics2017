@@ -108,20 +108,31 @@ size_t fs_write(int fd, const void *buf, size_t len) {
   if (writer == invalid_write) {
     return 0;
   }
+  if (f->write == NULL && f->size != 0) {
+    size_t rest = f->size > open_table[fd].open_offset ? f->size - open_table[fd].open_offset : 0;
+    if (len > rest) {
+      len = rest;
+    }
+  }
   size_t ret = writer(buf, open_table[fd].open_offset + f->disk_offset, len);
   open_table[fd].open_offset += ret;
   return ret;
 }
 
-size_t fs_lseek(int fd, size_t offset, int whence) {
+size_t fs_lseek(int fd, ssize_t offset, int whence) {
   assert(fd >= 0 && fd < NR_OPEN_FILES && open_table[fd].used);
   Finfo *f = &file_table[open_table[fd].file_idx];
+  ssize_t new_offset = 0;
   switch (whence) {
-    case SEEK_SET: open_table[fd].open_offset = offset; break;
-    case SEEK_CUR: open_table[fd].open_offset += offset; break;
-    case SEEK_END: open_table[fd].open_offset = f->size + offset; break;
+    case SEEK_SET: new_offset = offset; break;
+    case SEEK_CUR: new_offset = (ssize_t)open_table[fd].open_offset + offset; break;
+    case SEEK_END: new_offset = (ssize_t)f->size + offset; break;
     default: panic("invalid whence = %d", whence);
   }
+  if (new_offset < 0) {
+    new_offset = 0;
+  }
+  open_table[fd].open_offset = (size_t)new_offset;
   return open_table[fd].open_offset;
 }
 

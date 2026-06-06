@@ -22,27 +22,41 @@ void _exit(int status) {
 }
 
 int _open(const char *path, int flags, mode_t mode) {
-  _exit(SYS_open);
+  return _syscall_(SYS_open, (uintptr_t)path, flags, mode);
 }
 
 int _write(int fd, void *buf, size_t count){
-  _exit(SYS_write);
+  return _syscall_(SYS_write, fd, (uintptr_t)buf, count);
 }
 
 void *_sbrk(intptr_t increment){
-  return (void *)-1;
+  extern char end;
+  static uintptr_t program_break = 0;
+  if (program_break == 0) {
+    program_break = (uintptr_t)&end;
+  }
+
+  uintptr_t old_break = program_break;
+  uintptr_t new_break = old_break + increment;
+  int ret = _syscall_(SYS_brk, new_break, 0, 0);
+  if (ret != 0) {
+    return (void *)-1;
+  }
+
+  program_break = new_break;
+  return (void *)old_break;
 }
 
 int _read(int fd, void *buf, size_t count) {
-  _exit(SYS_read);
+  return _syscall_(SYS_read, fd, (uintptr_t)buf, count);
 }
 
 int _close(int fd) {
-  _exit(SYS_close);
+  return _syscall_(SYS_close, fd, 0, 0);
 }
 
 off_t _lseek(int fd, off_t offset, int whence) {
-  _exit(SYS_lseek);
+  return _syscall_(SYS_lseek, fd, offset, whence);
 }
 
 // The code below is not used by Nanos-lite.
@@ -54,8 +68,7 @@ int _fstat(int fd, struct stat *buf) {
 }
 
 int execve(const char *fname, char * const argv[], char *const envp[]) {
-  assert(0);
-  return -1;
+  return _syscall_(SYS_execve, (uintptr_t)fname, (uintptr_t)argv, (uintptr_t)envp);
 }
 
 int _execve(const char *fname, char * const argv[], char *const envp[]) {
@@ -110,10 +123,7 @@ clock_t _times(void *buf) {
 }
 
 int _gettimeofday(struct timeval *tv) {
-  assert(0);
-  tv->tv_sec = 0;
-  tv->tv_usec = 0;
-  return 0;
+  return _syscall_(SYS_gettimeofday, (uintptr_t)tv, 0, 0);
 }
 
 int _fcntl(int fd, int cmd, ... ) {

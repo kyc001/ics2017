@@ -223,6 +223,16 @@ static inline void update_eip(void) {
   cpu.eip = (decoding.is_jmp ? (decoding.is_jmp = 0, decoding.jmp_eip) : decoding.seq_eip);
 }
 
+void raise_intr(uint8_t NO, vaddr_t ret_addr);
+
+static inline void poll_intr(void) {
+  if (cpu.INTR && cpu.eflags.IF) {
+    cpu.INTR = false;
+    raise_intr(32, cpu.eip);
+    update_eip();
+  }
+}
+
 void exec_wrapper(bool print_flag) {
 #ifdef DEBUG
   decoding.p = decoding.asm_buf;
@@ -247,6 +257,7 @@ void exec_wrapper(bool print_flag) {
 #endif
 
   update_eip();
+  poll_intr();
 
 #ifdef DIFF_TEST
   void difftest_step(uint32_t);

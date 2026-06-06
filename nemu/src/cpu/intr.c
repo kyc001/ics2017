@@ -21,7 +21,5 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
 }
 
 void dev_raise_intr() {
-  if (cpu.eflags.IF) {
-    raise_intr(32, cpu.eip);
-  }
+  cpu.INTR = true;
 }
