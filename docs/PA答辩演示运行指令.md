@@ -77,7 +77,7 @@ export NEMU_HOME="$PWD/nemu"
 export AM_HOME="$PWD/nexus-am"
 export NAVY_HOME="$PWD/navy-apps"
 
-make -C nanos-lite ISA=x86 update
+make -C nanos-lite ARCH=x86-nemu update
 NEMU_USE_HOST_DISPLAY=1 make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bin/pal
 ```
 
@@ -96,7 +96,7 @@ export NEMU_HOME="$PWD/nemu"
 export AM_HOME="$PWD/nexus-am"
 export NAVY_HOME="$PWD/navy-apps"
 
-make -C nanos-lite ISA=x86 update
+make -C nanos-lite ARCH=x86-nemu update
 NEMU_USE_HOST_DISPLAY=1 make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bin/pal
 ```
 
@@ -109,3 +109,5 @@ NEMU_USE_HOST_DISPLAY=1 make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bi
 演示结束后可在终端按 `Ctrl-C` 退出。
 
 ## 5. 演示完切回最终分支
+
+
