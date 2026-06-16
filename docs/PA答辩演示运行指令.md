@@ -130,3 +130,62 @@ Q 逃跑
 F 自动选法术/强攻
 R 重复上次行动
 Esc 返回/取消
+
+
+---
+
+## 1. ramdisk 存储了什么？
+
+* **本质**：NEMU 模拟的一块连续内存（"伪磁盘"），通过 `nanos-lite` 中的 `.incbin` 直接**硬编码嵌入内核**。
+* **内容**：按顺序拼接的 **Navy 用户程序可执行文件（ELF）**（如 `/bin/pal`, `/bin/nterm`）。
+* **接口**：极其朴素，`ramdisk_read/write` 仅基于 `ramdisk_start` 基址进行 `memcpy`。
+
+---
+
+## 2. `make update` 的实现与工作流
+
+在 `nanos-lite/` 下执行，实现**数据与元数据的同步更新**：
+
+1. **打包镜像**：遍历 Navy 编译出的可执行文件，依次追加到 `build/ramdisk.img`。
+2. **生成配置**：自动生成 `src/files.h`，将每个文件的 `name`、`size` 以及在镜像中的 `disk_offset` 写入 `Finfo` 结构体数组。
+
+> **⚠️ 经典大坑**：修改 Navy 程序后若不执行 `make update`，会导致 `files.h` 中的元数据过期，加载时发生程序**错位或截断**。
+
+---
+
+## 3. `files.h` 的作用与文件系统分发
+
+* **元数据表**：作为 `file_table[]` 的核心初始化数据，向 Nanos-lite 文件系统（`fs.c`）宣告所有静态文件的**边界与位置**。
+* **分发机制**：
+* **普通文件**：`fs_open` 查表获取 `disk_offset` ──> `fs_read/write` 路由至 `ramdisk_read/write`。
+* **设备文件**：在表头或特定位置手动注册特殊文件（如 `/dev/fb`, `/dev/events`），通过特异化的虚函数指针（`read/write` 钩子）分发至硬件驱动（如 `fb_write`）。
+
+
+
+---
+
+## 4. x86 寄存器结构与 NEMU 实现 (PA1)
+
+### 数量与位宽
+
+* **通用寄存器 (GPR)**：8 个 32 位通用寄存器（顺序严格为 `eax, ecx, edx, ebx, esp, ebp, esi, edi`），支持 16 位和 8 位切片访问。
+* **控制与状态**：`eip` (PC)、`eflags`，以及后续的 `cr0/cr3`、`idtr`。
+
+### 嵌套共用体 (Union) 实现方案
+
+利用 **Union 共享内存**的特性，完美模拟 x86 寄存器的别名机制：
+
+```c
+typedef struct {
+  union {
+    union {
+      uint32_t _32; uint16_t _16; uint8_t _8[2];
+    } gpr[8]; // 视图一：数组形式，便于译码期通过 index 索引
+    struct {
+      rtlreg_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
+    };        // 视图二：结构体形式，便于代码中按名字直观访问
+  };
+  vaddr_t eip;
+} CPU_state;
+
+```
