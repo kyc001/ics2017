@@ -97,7 +97,8 @@ export AM_HOME="$PWD/nexus-am"
 export NAVY_HOME="$PWD/navy-apps"
 
 make -C nanos-lite ARCH=x86-nemu update
-NEMU_USE_HOST_DISPLAY=1 make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bin/pal
+NEMU_USE_HOST_DISPLAY=1 
+make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bin/pal
 ```
 
 预期现象：
@@ -111,3 +112,21 @@ NEMU_USE_HOST_DISPLAY=1 make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bi
 ## 5. 演示完切回最终分支
 
 
+
+等角色行动轮到时，左下会出现 4 个图标。
+用 方向键 选图标：
+上：普通攻击
+左：法术/技能
+右：合体技
+下：杂项
+按 Enter/Space 确认。
+进技能列表后，用方向键选技能，Enter 确认，再选目标确认。
+注意：战斗里 WASD 不是方向键。当前映射是快捷键：
+
+D 防御
+E 使用物品
+W 投掷物品
+Q 逃跑
+F 自动选法术/强攻
+R 重复上次行动
+Esc 返回/取消
