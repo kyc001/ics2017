@@ -2,7 +2,6 @@
 
 本文按答辩要求整理，可以在仓库根目录 `/workspace/ics2017` 直接复制运行。
 
-注意：第 3 步和第 4 步会切换 Git 分支，建议先打开本文并复制好对应命令块，再执行 `git switch`。
 
 ## 0. 准备环境变量
 
@@ -73,7 +72,6 @@ NEMU_USE_HOST_DISPLAY=1 make ARCH=x86-nemu run
 
 ```bash
 cd /workspace/ics2017
-git switch pa3
 
 export NEMU_HOME="$PWD/nemu"
 export AM_HOME="$PWD/nexus-am"
@@ -93,7 +91,6 @@ NEMU_USE_HOST_DISPLAY=1 make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bi
 
 ```bash
 cd /workspace/ics2017
-git switch pa5
 
 export NEMU_HOME="$PWD/nemu"
 export AM_HOME="$PWD/nexus-am"
@@ -112,10 +109,3 @@ NEMU_USE_HOST_DISPLAY=1 make -C nanos-lite ARCH=x86-nemu run DEFAULT_PROGRAM=/bi
 演示结束后可在终端按 `Ctrl-C` 退出。
 
 ## 5. 演示完切回最终分支
-
-如果答辩前后还要回到最终提交版本：
-
-```bash
-cd /workspace/ics2017
-git switch pa5
-```
